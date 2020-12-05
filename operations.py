@@ -19,10 +19,10 @@ class OperationBuilder:
 
     def pocket(self, top_z, bottom_z, left_x, right_x, bottom_y, top_y, dog_bone=False, minor_dim=None):
 
-        g_code_str = '\n(Pocket)\n'
+        if bottom_z > top_z:
+            raise ValueError('Must have bottom_z (%f) <= top_z (%f).' % (bottom_z, top_z))
 
-        if dog_bone:
-            raise ValueError('Dog-boning not yet supported')
+        g_code_str = '\n(Pocket)\n'
 
         # Mutate bounds.
         # We now make these the extent to which the cutter can move.
@@ -30,7 +30,6 @@ class OperationBuilder:
         right_x = right_x - self.cutter_radius
         top_y = top_y - self.cutter_radius
         bottom_y = bottom_y + self.cutter_radius
-
 
         g_code_str += 'G0 Z%.3f\n' % self.safe_z
         g_code_str += 'G0 X%.3f Y%.3f\n' % (left_x, top_y)
@@ -68,10 +67,31 @@ class OperationBuilder:
                 x_edge2 = right_x if x_dir_l_to_r else left_x
                 y_edge1 = top_y if layer_t_to_b else bottom_y
                 y_edge2 = bottom_y if layer_t_to_b else top_y
+
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge1)
+                if dog_bone:
+                    db_x = (left_x - (1 - 2**-0.5)*self.cutter_radius) if x_dir_l_to_r else (right_x + (1 - 2**-0.5)*self.cutter_radius)
+                    db_y = (top_y + (1 - 2**-0.5)*self.cutter_radius) if layer_t_to_b else (bottom_y - (1 - 2**-0.5)*self.cutter_radius)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (db_x, db_y)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge1)
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge2)
+                if dog_bone:
+                    db_x = (left_x - (1 - 2**-0.5)*self.cutter_radius) if x_dir_l_to_r else (right_x + (1 - 2**-0.5)*self.cutter_radius)
+                    db_y = (bottom_y - (1 - 2**-0.5)*self.cutter_radius) if layer_t_to_b else (top_y + (1 - 2**-0.5)*self.cutter_radius)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (db_x, db_y)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge2)
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge2, y_edge2)
+                if dog_bone:
+                    db_x = (right_x + (1 - 2**-0.5)*self.cutter_radius) if x_dir_l_to_r else (left_x - (1 - 2**-0.5)*self.cutter_radius)
+                    db_y = (bottom_y - (1 - 2**-0.5)*self.cutter_radius) if layer_t_to_b else (top_y + (1 - 2**-0.5)*self.cutter_radius)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (db_x, db_y)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge2, y_edge2)
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge2, y_edge1)
+                if dog_bone:
+                    db_x = (right_x + (1 - 2**-0.5)*self.cutter_radius) if x_dir_l_to_r else (left_x - (1 - 2**-0.5)*self.cutter_radius)
+                    db_y = (top_y + (1 - 2**-0.5)*self.cutter_radius) if layer_t_to_b else (bottom_y - (1 - 2**-0.5)*self.cutter_radius)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (db_x, db_y)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge2, y_edge1)
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge1)
 
                 # Traverse the square
@@ -128,9 +148,29 @@ class OperationBuilder:
                 x_edge1 = left_x if layer_l_to_r else right_x
                 x_edge2 = right_x if layer_l_to_r else left_x
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge1)
+                if dog_bone:
+                    db_x = (left_x - (1 - 2**-0.5)*self.cutter_radius) if layer_l_to_r else (right_x + (1 - 2**-0.5)*self.cutter_radius)
+                    db_y = (top_y + (1 - 2**-0.5)*self.cutter_radius) if y_dir_t_to_b else (bottom_y - (1 - 2**-0.5)*self.cutter_radius)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (db_x, db_y)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge1)
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge2)
+                if dog_bone:
+                    db_x = (left_x - (1 - 2**-0.5)*self.cutter_radius) if layer_l_to_r else (right_x + (1 - 2**-0.5)*self.cutter_radius)
+                    db_y = (bottom_y - (1 - 2**-0.5)*self.cutter_radius) if y_dir_t_to_b else (top_y + (1 - 2**-0.5)*self.cutter_radius)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (db_x, db_y)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge2)
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge2, y_edge2)
+                if dog_bone:
+                    db_x = (right_x + (1 - 2**-0.5)*self.cutter_radius) if layer_l_to_r else (left_x - (1 - 2**-0.5)*self.cutter_radius)
+                    db_y = (bottom_y - (1 - 2**-0.5)*self.cutter_radius) if y_dir_t_to_b else (top_y + (1 - 2**-0.5)*self.cutter_radius)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (db_x, db_y)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge2, y_edge2)
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge2, y_edge1)
+                if dog_bone:
+                    db_x = (right_x + (1 - 2**-0.5)*self.cutter_radius) if layer_l_to_r else (left_x - (1 - 2**-0.5)*self.cutter_radius)
+                    db_y = (top_y + (1 - 2**-0.5)*self.cutter_radius) if y_dir_t_to_b else (bottom_y - (1 - 2**-0.5)*self.cutter_radius)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (db_x, db_y)
+                    g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge2, y_edge1)
                 g_code_str += 'G1 X%.3f Y%.3f\n' % (x_edge1, y_edge1)
 
                 # Traverse the square
