@@ -217,7 +217,7 @@ class OperationBuilder:
         self.g_code_str += g_code_str
 
     def hole(self, top_z, bottom_z, centre_x, centre_y, radius):
-        # WARNING - not currently functional for hole requiring more than one sprial
+        # WARNING - not currently functional for hole requiring more than one spiral
         motion_radius = radius - self.cutter_radius
         motion_cirumference = 2.0 * motion_radius * 3.14159
         depth = top_z - bottom_z
